@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:irono/Provider/AuthProvider.dart';
 import 'package:irono/Screens/base_screen.dart';
+import 'package:irono/Utils/custom.dart';
 import 'package:otp_text_field/otp_field.dart';
 import 'package:otp_text_field/style.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Utils/colors.dart';
 
+enum FROM { Login, SignUp }
+
 class OtpPage extends StatefulWidget {
-  const OtpPage({super.key});
+  final String phoneNumber;
+  final FROM from;
+  OtpPage({required this.phoneNumber, required this.from});
 
   @override
   State<OtpPage> createState() => _OtpPageState();
@@ -16,6 +24,7 @@ class OtpPage extends StatefulWidget {
 
 class _OtpPageState extends State<OtpPage> {
   OtpFieldController otpController = OtpFieldController();
+  String? _otp;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +83,7 @@ class _OtpPageState extends State<OtpPage> {
                         onChanged: (pin) {},
                         onCompleted: (pin) {
                           print("Completed: " + pin);
+                          _otp = pin;
                         }),
                   ),
                   Align(
@@ -105,10 +115,47 @@ class _OtpPageState extends State<OtpPage> {
                             borderRadius:
                                 BorderRadius.circular(10.r), // <-- Radius
                           )),
-                      onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => BaseScreen()),
-                            (route) => false);
+                      onPressed: () async {
+                        if (_otp != null) {
+                          if (_otp!.length == 4) {
+                            LoadingOverlay.show(context);
+                            final response = await context
+                                .read<AuthProvider>()
+                                .verifyOtp(widget.phoneNumber, _otp);
+                            LoadingOverlay.hide();
+
+                            if (response['result']['message'] ==
+                                "User Authentication Failed !") {
+                              showToast("Invalid OTP. Authentication Failed");
+                            } else {
+                              SharedPreferences sharedPreferences =
+                                  await SharedPreferences.getInstance();
+                              await sharedPreferences.setString(
+                                  "phone_number", widget.phoneNumber);
+                              await sharedPreferences.setBool(
+                                  "isLoggedIn", true);
+                              if (widget.from == FROM.SignUp) {
+                                await context
+                                    .read<AuthProvider>()
+                                    .submitBusinessDetails(
+                                        response['result']['data']['user']);
+                                Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (context) => BaseScreen()),
+                                    (route) => false);
+                              } else {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (context) => BaseScreen()),
+                                    (route) => false);
+                              }
+                            }
+                          } else {
+                            showToast("OTP must be four digits");
+                          }
+                        } else {
+                          showToast("Please provide the OTP");
+                        }
                       },
                       child: Text(
                         "Submit",

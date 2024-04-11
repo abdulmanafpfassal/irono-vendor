@@ -1,9 +1,19 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:irono/Provider/AuthProvider.dart';
 import 'package:irono/Screens/Pre_Login/login_page.dart';
+import 'package:irono/Screens/Profile/editProfile.dart';
+import 'package:irono/Screens/contactUs.dart';
+import 'package:irono/Screens/privacyPolicy.dart';
+import 'package:irono/Screens/sendFeedback.dart';
+import 'package:irono/Screens/terms.dart';
 import 'package:irono/Utils/colors.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -13,6 +23,18 @@ class UserScreen extends StatefulWidget {
 }
 
 class _UserScreenState extends State<UserScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(seconds: 0), () async {
+      await context.read<AuthProvider>().fetchProfileDetails();
+      var profileData = context.read<AuthProvider>().profileDetails;
+      log("profile data is $profileData");
+
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,118 +56,158 @@ class _UserScreenState extends State<UserScreen> {
             SizedBox(
               height: 20.h,
             ),
-            Align(
-              alignment: Alignment.center,
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 35.r,
-                  ),
-                  SizedBox(
-                    height: 10.h,
-                  ),
-                  Text("Jack James")
-                ],
-              ),
-            ),
+            Consumer<AuthProvider>(builder: (context, state, _) {
+              return state.profileDetails.isNotEmpty
+                  ? Align(
+                      alignment: Alignment.center,
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 35.r,
+                            backgroundImage: NetworkImage(
+                                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSajBGaxmLXDuMT23LOv41vdsBiLAZp3UgDKPWfyWnqw&s"),
+                          ),
+                          SizedBox(
+                            height: 10.h,
+                          ),
+                          Text(state.profileDetails['result']['data']['name']
+                              .toString())
+                        ],
+                      ),
+                    )
+                  : SizedBox();
+            }),
             Divider(
               color: ColorUtils().primary.withOpacity(0.1),
             ),
             SizedBox(
               height: 20.h,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Edit Profile",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => EditProfile()));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Edit Profile",
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11.sp,
-                )
-              ],
-            ),
-            SizedBox(
-              height: 20.h,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Terms & Conditions",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11.sp,
-                )
-              ],
-            ),
-            SizedBox(
-              height: 20.h,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Privacy Policy",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11.sp,
-                )
-              ],
-            ),
-            SizedBox(
-              height: 20.h,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Contact Us",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11.sp,
-                )
-              ],
-            ),
-            SizedBox(
-              height: 20.h,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Send Feedback",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11.sp,
-                )
-              ],
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11.sp,
+                  )
+                ],
+              ),
             ),
             SizedBox(
               height: 20.h,
             ),
             InkWell(
               onTap: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => Terms()));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Terms & Conditions",
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11.sp,
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => PrivacyPolicy()));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Privacy Policy",
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11.sp,
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => ContactUs()));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Contact Us",
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11.sp,
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => SendFeedBack()));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Send Feedback",
+                    style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11.sp,
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            InkWell(
+              onTap: () async {
+                SharedPreferences sharedPreferences =
+                    await SharedPreferences.getInstance();
+                await sharedPreferences.setBool("isLoggedIn", false);
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => LoginPage()),
                     (route) => false);
@@ -172,15 +234,26 @@ class _UserScreenState extends State<UserScreen> {
       bottomNavigationBar: Container(
         height: 20.h,
         child: Center(
-          child: Text(
-            "v1.0.0",
-            style: GoogleFonts.inter(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                "assets/images/logo_irono.png",
+                height: 30,
+                width: 30,
+              ),
+              Text(
+                "Powered by Klystron",
+                style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
